@@ -340,6 +340,21 @@
     background: var(--warm-white); border: 1px solid var(--border);
     border-radius: 20px; padding: 24px 26px; margin-bottom: 14px;
   }
+  .ai-advice-name {
+    margin-bottom: 4px;
+  }
+  .ai-advice-use {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .ai-advice-tip {
+    font-size: 13px;
+    color: var(--ink-light);
+    line-height: 1.65;
+    margin-top: 0;
+  }
   .ai-advice-header {
 </style>
 </head>
@@ -538,7 +553,6 @@
       <div>
         <div class="ai-advice-title">
           3つのAI、あなたへのワンポイント
-          <span>How to use each AI for your needs</span>
         </div>
       </div>
     </div>
@@ -897,12 +911,7 @@ function showResult() {
   adviceList.forEach(item => {
     const div = document.createElement('div');
     div.className = 'ai-advice-item ' + item.cls;
-    div.innerHTML = '<div class="ai-advice-item-header"><span class="ai-badge ' + item.cls + '">' + item.ai + '</span><span class="ai-advice-use">' + item.use + '</span></div><div class="ai-advice-tip">' + item.tip + '</div>';
-    adviceEl.appendChild(div);
-  });
-}
-
-function retry() {
+    div.innerHTML = '<div class="ai-advice-item-header"><      div.innerHTML = '<p class="ai-advice-name"><span class="ai-badge ' + item.cls + '">' + item.ai + '</span></p><p class="ai-advice-use">' + item.use + '</p><p class="ai-advice-tip">' + item.tip + '</p>'; {
   for (let q = 1; q <= TOTAL_Q; q++) {
     answers[q] = [];
     const card = document.querySelector('[data-q="' + q + '"]');
