@@ -90,8 +90,6 @@
 
   }
 
-  /* ─── ヘッダー ─── */
-
   .hero {
 
     text-align: center;
@@ -154,8 +152,6 @@
 
   }
 
-  /* ─── プログレス ─── */
-
   .progress-wrap {
 
     max-width: 560px; margin: 0 auto 32px;
@@ -189,8 +185,6 @@
     transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%;
 
   }
-
-  /* ─── カード ─── */
 
   .card-wrap { max-width: 560px; margin: 0 auto; padding: 0 24px 80px; }
 
@@ -229,8 +223,6 @@
     color: var(--ink); margin-bottom: 8px;
 
   }
-
-  /* 複数選択ヒント */
 
   .multi-hint {
 
@@ -294,8 +286,6 @@
 
   }
 
-  /* チェックボックス風 */
-
   .choice-check {
 
     width: 22px; height: 22px;
@@ -330,8 +320,6 @@
 
   }
 
-  /* 選択数カウント */
-
   .selected-count {
 
     margin-top: 12px;
@@ -341,8 +329,6 @@
   }
 
   .selected-count span { color: var(--accent); font-weight: 600; }
-
-  /* ナビ */
 
   .nav-row { display: flex; gap: 10px; margin-top: 18px; }
 
@@ -385,8 +371,6 @@
   }
 
   .btn-secondary:hover { border-color: var(--ink-light); color: var(--ink); }
-
-  /* ─── 結果画面 ─── */
 
   #result-screen {
 
@@ -608,8 +592,6 @@
 
   }
 
-  /* ─── タイプカード ─── */
-
   .type-card {
 
     background: linear-gradient(135deg, #1a1410 0%, #3a2a20 100%);
@@ -683,8 +665,6 @@
     font-weight: 500;
 
   }
-
-  /* ─── 各AIアドバイスカード ─── */
 
   .ai-advice-card {
 
@@ -1442,7 +1422,13 @@ function calcScores() {
 
 }
 
-// ─── プラン定義 ──────────────────────────────────
+// ── プラン情報（2026年3月最新版）──────────────────────
+
+// ChatGPT: Free / Go $8 / Plus $20 / Pro $200（最新モデル：GPT-5.2）
+
+// Claude:  Free / Pro $20 / Max 5x $100 / Max 20x $200（最新モデル：Opus 4.6 / Sonnet 4.6）
+
+// Gemini:  Free / AI Plus ¥1,200 / AI Pro ¥2,900前後 / AI Ultra ¥36,400前後（最新モデル：Gemini 3.1 Pro）
 
 const PLANS = {
 
@@ -1483,8 +1469,6 @@ const PLANS = {
   }
 
 };
-
-// ─── 併用パターン ─────────────────────────────────
 
 const COMBO_MAP = {
 
@@ -1547,8 +1531,6 @@ const COMBO_MAP = {
   }
 
 };
-
-// ─── ユーザータイプ定義 ──────────────────────────
 
 const USER_TYPES = [
 
@@ -1677,8 +1659,6 @@ function determineUserType(a) {
   return USER_TYPES[USER_TYPES.length - 1];
 
 }
-
-// ─── 各AIのワンポイントアドバイス生成 ────────────
 
 function buildAiAdvice(a) {
 
@@ -1937,8 +1917,6 @@ function showResult() {
   });
 
 }
-
-// ─── リトライ ────────────────────────────────────
 
 function retry() {
 
