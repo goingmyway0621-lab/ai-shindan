@@ -911,7 +911,12 @@ function showResult() {
   adviceList.forEach(item => {
     const div = document.createElement('div');
     div.className = 'ai-advice-item ' + item.cls;
-    div.innerHTML = '<div class="ai-advice-item-header"><      div.innerHTML = '<p class="ai-advice-name"><span class="ai-badge ' + item.cls + '">' + item.ai + '</span></p><p class="ai-advice-use">' + item.use + '</p><p class="ai-advice-tip">' + item.tip + '</p>'; {
+    div.innerHTML = '<p class="ai-advice-name"><span class="ai-badge ' + item.cls + '">' + item.ai + '</span></p><p class="ai-advice-use">' + item.use + '</p><p class="ai-advice-tip">' + item.tip + '</p>';
+    adviceEl.appendChild(div);
+  });
+}
+
+function retry() {
   for (let q = 1; q <= TOTAL_Q; q++) {
     answers[q] = [];
     const card = document.querySelector('[data-q="' + q + '"]');
