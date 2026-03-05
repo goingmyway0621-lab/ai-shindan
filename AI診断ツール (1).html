@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI最適プラン診断｜あなたに合うAIがわかる</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=DM+Sans:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #faf7f2;
+    --warm-white: #fff9f4;
+    --ink: #1a1410;
+    --ink-light: #4a3f35;
+    --accent: #c4622d;
+    --accent-light: #e8855a;
+    --accent-pale: #f7e8df;
+    --gold: #c9a84c;
+    --gold-pale: #fdf5e0;
+    --border: #e2d8cc;
+    --chatgpt: #10a37f;
+    --claude: #c4622d;
+    --gemini: #4285f4;
+    --shadow: 0 4px 24px rgba(26,20,16,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(196,98,45,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  body::after {
+    content: '';
+    position: fixed; bottom: -150px; left: -150px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(201,168,76,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ─── ヘッダー ─── */
+  .hero {
+    text-align: center;
+    padding: 64px 24px 40px;
+    max-width: 680px;
+    margin: 0 auto;
+    animation: fadeUp 0.8s ease both;
+  }
+  .hero-eyebrow {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 16px; display: inline-block;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(26px, 5vw, 42px);
+    line-height: 1.25; color: var(--ink); margin-bottom: 14px;
+  }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero-sub { font-size: 14px; line-height: 1.7; color: var(--ink-light); }
+  .hero-meta {
+    margin-top: 18px;
+    display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+  }
+  .hero-badge {
+    font-size: 12px; color: var(--ink-light);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .hero-badge::before {
+    content: ''; width: 6px; height: 6px;
+    border-radius: 50%; background: var(--gold); flex-shrink: 0;
+  }
+
+  /* ─── プログレス ─── */
+  .progress-wrap {
+    max-width: 560px; margin: 0 auto 32px;
+    padding: 0 24px; animation: fadeUp 0.8s 0.2s ease both; opacity: 0;
+  }
+  .progress-label {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--ink-light); margin-bottom: 8px; font-weight: 500;
+  }
+  .progress-track {
+    height: 3px; background: var(--border); border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%;
+  }
+
+  /* ─── カード ─── */
+  .card-wrap { max-width: 560px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .question-card {
+    background: var(--warm-white);
+    border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px 28px;
+    box-shadow: var(--shadow);
+    display: none; animation: fadeUp 0.45s ease both;
+  }
+  .question-card.active { display: block; }
+
+  .q-num {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px;
+  }
+  .q-text {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 17px; font-weight: 600; line-height: 1.65;
+    color: var(--ink); margin-bottom: 8px;
+  }
+
+  /* 複数選択ヒント */
+  .multi-hint {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--ink-light);
+    background: var(--cream); border: 1px solid var(--border);
+    padding: 3px 10px; border-radius: 99px;
+    margin-bottom: 18px;
+  }
+  .multi-hint::before {
+    content: '☑'; font-size: 12px; color: var(--accent);
+  }
+
+  .choices { display: flex; flex-direction: column; gap: 9px; }
+
+  .choice-btn {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 16px;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 11px; cursor: pointer;
+    text-align: left; font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px; line-height: 1.5;
+    color: var(--ink); transition: all 0.18s ease; width: 100%;
+  }
+  .choice-btn:hover {
+    border-color: var(--accent-light);
+    background: var(--accent-pale);
+    transform: translateX(3px);
+  }
+  .choice-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent-pale);
+    color: var(--accent); font-weight: 500;
+  }
+
+  /* チェックボックス風 */
+  .choice-check {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.18s;
+    font-size: 13px; color: transparent; line-height: 1;
+  }
+  .choice-btn.selected .choice-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  .choice-btn:hover .choice-check {
+    border-color: var(--accent-light);
+  }
+
+  /* 選択数カウント */
+  .selected-count {
+    margin-top: 12px;
+    font-size: 12px; color: var(--ink-light); min-height: 18px;
+  }
+  .selected-count span { color: var(--accent); font-weight: 600; }
+
+  /* ナビ */
+  .nav-row { display: flex; gap: 10px; margin-top: 18px; }
+  .btn {
+    padding: 12px 24px; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s ease; border: none;
+  }
+  .btn-primary { background: var(--accent); color: white; flex: 1; }
+  .btn-primary:hover {
+    background: var(--accent-light); transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(196,98,45,0.3);
+  }
+  .btn-primary:disabled {
+    background: var(--border); color: var(--ink-light);
+    cursor: not-allowed; transform: none; box-shadow: none;
+  }
+  .btn-secondary {
+    background: transparent; color: var(--ink-light);
+    border: 1.5px solid var(--border); padding: 12px 18px;
+  }
+  .btn-secondary:hover { border-color: var(--ink-light); color: var(--ink); }
+
+  /* ─── 結果画面 ─── */
+  #result-screen {
+    display: none; max-width: 600px;
+    margin: 0 auto; padding: 0 24px 80px;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .result-hero { text-align: center; padding: 40px 0 28px; }
+  .result-hero-label {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent); font-weight: 500; margin-bottom: 12px;
+  }
+  .result-hero h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(22px, 4vw, 34px); line-height: 1.35; margin-bottom: 8px;
+  }
+  .result-hero-sub { font-size: 13px; color: var(--ink-light); line-height: 1.6; }
+
+  .ai-result-card {
+    background: var(--warm-white); border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px; margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .ai-result-card.main {
+    border-color: var(--accent); border-width: 2px;
+    background: linear-gradient(135deg, var(--warm-white) 0%, var(--accent-pale) 100%);
+  }
+
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-tag {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.15em;
+    text-transform: uppercase; padding: 4px 10px;
+    border-radius: 99px; background: var(--accent); color: white;
+  }
+
+  .ai-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px; font-weight: 700; margin-bottom: 6px;
+  }
+  .ai-name.chatgpt { color: var(--chatgpt); }
+  .ai-name.claude  { color: var(--claude); }
+  .ai-name.gemini  { color: var(--gemini); }
+  .ai-name.mixed   { color: var(--ink); }
+
+  .ai-reason { font-size: 13.5px; color: var(--ink-light); line-height: 1.65; }
+
+  .score-section { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+  .score-label {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-light); font-weight: 500; margin-bottom: 12px;
+  }
+  .score-bars { display: flex; flex-direction: column; gap: 9px; }
+  .score-row { display: flex; align-items: center; gap: 10px; }
+  .score-ai-name { font-size: 12px; font-weight: 600; width: 68px; flex-shrink: 0; }
+  .score-bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .score-bar-fill {
+    height: 100%; border-radius: 99px;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1) 0.3s; width: 0%;
+  }
+  .score-bar-fill.chatgpt { background: var(--chatgpt); }
+  .score-bar-fill.claude  { background: var(--claude); }
+  .score-bar-fill.gemini  { background: var(--gemini); }
+  .score-val { font-size: 12px; font-weight: 600; width: 26px; text-align: right; color: var(--ink-light); }
+
+  .plan-card {
+    background: var(--gold-pale); border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 16px; padding: 22px 26px; margin-bottom: 14px;
+  }
+  .plan-card-label {
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--gold); font-weight: 600; margin-bottom: 8px;
+  }
+  .plan-name {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 17px; font-weight: 600; color: var(--ink); margin-bottom: 6px;
+  }
+  .plan-desc { font-size: 13px; color: var(--ink-light); line-height: 1.65; }
+  .plan-price {
+    display: inline-block; margin-top: 8px;
+    padding: 3px 12px; background: white; border-radius: 99px;
+    font-size: 12px; font-weight: 600; color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.3);
+  }
+
+  .pay-card {
+    background: var(--warm-white); border: 1px solid var(--border);
+    border-radius: 16px; padding: 22px 26px; margin-bottom: 14px;
+  }
+  .pay-meter { display: flex; gap: 5px; margin: 12px 0 8px; }
+  .pay-pip {
+    height: 8px; flex: 1; border-radius: 99px; background: var(--border);
+    transition: background 0.4s ease;
+  }
+  .pay-pip.lit { background: var(--accent); }
+  .pay-verdict { font-size: 13px; font-weight: 500; color: var(--accent); }
+
+  .combo-card {
+    background: var(--warm-white); border: 1px solid var(--border);
+    border-radius: 16px; padding: 22px 26px; margin-bottom: 14px;
+  }
+  .combo-title {
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--ink-light); font-weight: 600; margin-bottom: 12px;
+  }
+  .combo-names {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700; margin-bottom: 10px; color: var(--ink);
+  }
+  .combo-roles { display: flex; flex-direction: column; gap: 8px; }
+  .combo-role {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 13px; line-height: 1.5;
+  }
+  .combo-role-tag {
+    flex-shrink: 0; padding: 2px 10px; border-radius: 99px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+
+  /* ─── タイプカード ─── */
+  .type-card {
+    background: linear-gradient(135deg, #1a1410 0%, #3a2a20 100%);
+    border-radius: 20px; padding: 28px; margin-bottom: 14px;
+    box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+  }
+  .type-card::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(201,168,76,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .type-card-label {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold); font-weight: 600; margin-bottom: 10px; opacity: 0.9;
+  }
+  .type-emoji { font-size: 36px; margin-bottom: 8px; display: block; }
+  .type-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; font-weight: 700; color: white;
+    margin-bottom: 10px; line-height: 1.3;
+  }
+  .type-desc {
+    font-size: 13.5px; color: rgba(255,255,255,0.75); line-height: 1.7;
+  }
+  .type-tags {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px;
+  }
+  .type-tag {
+    font-size: 11px; padding: 3px 10px;
+    border-radius: 99px;
+    background: rgba(201,168,76,0.15);
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  /* ─── 各AIアドバイスカード ─── */
+  .ai-advice-card {
+    background: var(--warm-white); border: 1px solid var(--border);
+    border-radius: 20px; padding: 24px 26px; margin-bottom: 14px;
+  }
+  .ai-advice-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+  }
+  .ai-advice-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 15px; font-weight: 600; color: var(--ink);
+  }
+  .ai-advice-title span {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-light); font-weight: 400; display: block; margin-top: 2px;
+  }
+  .ai-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .ai-advice-list { display: flex; flex-direction: column; gap: 12px; }
+  .ai-advice-item {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border-left: 3px solid transparent;
+  }
+  .ai-advice-item.chatgpt { background: #f0faf7; border-left-color: var(--chatgpt); }
+  .ai-advice-item.claude  { background: var(--accent-pale); border-left-color: var(--claude); }
+  .ai-advice-item.gemini  { background: #f0f4ff; border-left-color: var(--gemini); }
+  .ai-advice-item-header {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ai-badge {
+    font-size: 11px; font-weight: 700; padding: 2px 9px;
+    border-radius: 99px; flex-shrink: 0;
+  }
+  .ai-badge.chatgpt { background: var(--chatgpt); color: white; }
+  .ai-badge.claude  { background: var(--claude);  color: white; }
+  .ai-badge.gemini  { background: var(--gemini);  color: white; }
+  .ai-advice-use {
+    font-size: 12px; font-weight: 600; color: var(--ink);
+  }
+  .ai-advice-tip {
+    font-size: 13px; color: var(--ink-light); line-height: 1.65;
+  }
+
+  .retry-wrap { text-align: center; padding: 16px 0 8px; }
+  .btn-retry {
+    background: transparent; border: 1.5px solid var(--border);
+    color: var(--ink-light); padding: 12px 32px; border-radius: 10px;
+    font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+  .btn-retry:hover { border-color: var(--accent); color: var(--accent); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 520px) {
+    .question-card { padding: 24px 18px; }
+    .ai-result-card { padding: 22px 18px; }
+    .nav-row { flex-direction: column; }
+    .btn-secondary { order: -1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <span class="hero-eyebrow">AI Tool Diagnosis</span>
+  <h1>あなたに最適な<br><em>AIツール</em>がわかる</h1>
+  <p class="hero-sub">7つの質問に答えるだけで、ChatGPT・Claude・Geminiの中から<br>あなたにぴったりのAIとプランを診断します。</p>
+  <div class="hero-meta">
+    <span class="hero-badge">所要時間 約1分</span>
+    <span class="hero-badge">一部複数選択OK</span>
+    <span class="hero-badge">無料・登録不要</span>
+  </div>
+</div>
+
+<div class="progress-wrap" id="progress-wrap">
+  <div class="progress-label">
+    <span id="progress-text">Q1 / 7</span>
+    <span id="progress-pct">14%</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+</div>
+
+<div class="card-wrap" id="quiz-wrap">
+
+  <div class="question-card active" data-q="1">
+    <div class="q-num">Question 01</div>
+    <div class="q-text">AIを使う主な目的は何ですか？</div>
+    <div class="multi-hint">当てはまるものをすべて選んでください</div>
+    <div class="choices">
+      <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>アイデア出し・ブレスト</button>
+      <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>文章の執筆・校正・要約</button>
+      <button class="choice-btn" data-val="3"><span class="choice-check">✓</span>検索・情報収集・調査</button>
+      <button class="choice-btn" data-val="4"><span class="choice-check">✓</span>画像生成・クリエイティブ制作</button>
+    </div>
+    <div class="selected-count" id="count-1">1つ以上選んでください</div>
+    <div class="nav-row">
+      <button class="btn btn-primary" id="next-1" disabled>次へ →</button>
+    </div>
+  </div>
+
+  <div class="question-card" data-q="2" data-single="true">
+    <div class="q-num">Question 02</div>
+    <div class="q-text">AIを使う頻度はどのくらいですか？</div>
+    <div class="multi-hint">1つ選んでください</div>
+    <div class="choices">
+      <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>月に数回程度</button>
+      <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>週1〜2回</button>
+      <button class="choice-btn" data-val="3"><span class="choice-check">✓</span>週3〜5回</button>
+      <button class="choice-btn" data-val="4"><span class="choice-check">✓</span>毎日使う</button>
+      <button class="choice-btn" data-val="5"><span class="choice-check">✓</span>1日に複数回使う</button>
+    </div>
+    <div class="selected-count" id="count-2">1つ以上選んでください</div>
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="goBack(2)">← 戻る</button>
+      <button class="btn btn-primary" id="next-2" disabled>次へ →</button>
+    </div>
+  </div>
+
+  <div class="question-card" data-q="3" data-single="true">
+    <div class="q-num">Question 03</div>
+    <div class="q-text">やり取りする文章の長さは？</div>
+    <div class="multi-hint">1つ選んでください</div>
+    <div class="choices">
+      <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>短い（ひとこと〜数行）</button>
+      <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>中程度（数段落）</button>
+      <button class="choice-btn" data-val="3"><span class="choice-check">✓</span>長い（レポート・記事レベル）</button>
+      <button class="choice-btn" data-val="4"><span class="choice-check">✓</span>非常に長い（書籍・マニュアルレベル）</button>
+    </div>
+    <div class="selected-count" id="count-3">1つ以上選んでください</div>
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="goBack(3)">← 戻る</button>
+      <button class="btn btn-primary" id="next-3" disabled>次へ →</button>
+    </div>
+  </div>
+
+  <div class="question-card" data-q="4">
+    <div class="q-num">Question 04</div>
+    <div class="q-text">AIを使っていて感じるストレスは？</div>
+    <div class="multi-hint">当てはまるものをすべて選んでください</div>
+    <div class="choices">
+      <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>回答の精度が低い・的外れ</button>
+      <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>文章の質・自然さが物足りない</button>
+      <button class="choice-btn" data-val="3"><span class="choice-check">✓</span>検索・最新情報が古い・使えない</button>
+      <button class="choice-btn" data-val="4"><span class="choice-check">✓</span>制限で止まる・速度が遅い</button>
+      <button class="choice-btn" data-val="5"><span class="choice-check">✓</span>操作が複雑・UIが使いにくい</button>
+    </div>
+    <div class="selected-count" id="count-4">1つ以上選んでください</div>
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="goBack(4)">← 戻る</button>
+      <button class="btn btn-primary" id="next-4" disabled>次へ →</button>
+    </div>
+  </div>
+
+  <div class="question-card" data-q="5">
+    <div class="q-num">Question 05</div>
+    <div class="q-text">AIに求めることは？</div>
+    <div class="multi-hint">当てはまるものをすべて選んでください</div>
+    <div class="choices">
+      <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>発想力・多様なアイデア</button>
+      <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>論理性・丁寧な解説</button>
+      <button class="choice-btn" data-val="3"><span class="choice-check">✓</span>最新情報・検索連携</button>
+      <button class="choice-btn" data-val="4"><span class="choice-check">✓</span>会話のテンポの良さ</button>
+      <button class="choice-btn" data-val="5"><span class="choice-check">✓</span>長文処理・細かいニュアンス</button>
+    </div>
+    <div class="selected-count" id="count-5">1つ以上選んでください</div>
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="goBack(5)">← 戻る</button>
+      <button class="btn btn-primary" id="next-5" disabled>次へ →</button>
+    </div>
+  </div>
+
+  <div class="question-card" data-q="6" data-single="true">
+    <div class="q-num">Question 06</div>
+    <div class="q-text">画像やファイルをAIに<br>読み込ませることはありますか？</div>
+    <div class="multi-hint">1つ選んでください</div>
+    <div class="choices">
+      <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>ほとんどない</button>
+      <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>たまに使う</button>
+      <button class="choice-btn" data-val="3"><span class="choice-check">✓</span>よく使う</button>
+    </div>
+    <div class="selected-count" id="count-6">1つ以上選んでください</div>
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="goBack(6)">← 戻る</button>
+      <button class="btn btn-primary" id="next-6" disabled>次へ →</button>
+    </div>
+  </div>
+
+  <div class="question-card" data-q="7" data-single="true">
+    <div class="q-num">Question 07 — Last</div>
+    <div class="q-text">AIに月いくらまで<br>払えますか？</div>
+    <div class="multi-hint">1つ選んでください</div>
+    <div class="choices">
+      <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>無料だけ使いたい</button>
+      <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>月1,000円前後まで</button>
+      <button class="choice-btn" data-val="3"><span class="choice-check">✓</span>月3,000円前後まで</button>
+      <button class="choice-btn" data-val="4"><span class="choice-check">✓</span>月1万円以上も検討できる</button>
+    </div>
+    <div class="selected-count" id="count-7">1つ以上選んでください</div>
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="goBack(7)">← 戻る</button>
+      <button class="btn btn-primary" id="next-7" disabled>診断する ✦</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 結果画面 -->
+<div id="result-screen">
+  <div class="result-hero">
+    <div class="result-hero-label">Your Result</div>
+    <h2 id="result-title"></h2>
+    <p class="result-hero-sub" id="result-subtitle"></p>
+  </div>
+
+  <!-- タイプカード -->
+  <div class="type-card">
+    <div class="type-card-label">Your AI Usage Type</div>
+    <span class="type-emoji" id="type-emoji"></span>
+    <div class="type-name" id="type-name"></div>
+    <div class="type-desc" id="type-desc"></div>
+    <div class="type-tags" id="type-tags"></div>
+  </div>
+
+  <div class="ai-result-card main">
+    <div class="card-header"><div class="card-tag">Main AI</div></div>
+    <div class="ai-name" id="main-ai-name"></div>
+    <div class="ai-reason" id="main-ai-reason"></div>
+    <div class="score-section">
+      <div class="score-label">スコア比較</div>
+      <div class="score-bars">
+        <div class="score-row">
+          <div class="score-ai-name">ChatGPT</div>
+          <div class="score-bar-track"><div class="score-bar-fill chatgpt" id="bar-chatgpt"></div></div>
+          <div class="score-val" id="val-chatgpt">0</div>
+        </div>
+        <div class="score-row">
+          <div class="score-ai-name">Claude</div>
+          <div class="score-bar-track"><div class="score-bar-fill claude" id="bar-claude"></div></div>
+          <div class="score-val" id="val-claude">0</div>
+        </div>
+        <div class="score-row">
+          <div class="score-ai-name">Gemini</div>
+          <div class="score-bar-track"><div class="score-bar-fill gemini" id="bar-gemini"></div></div>
+          <div class="score-val" id="val-gemini">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="plan-card">
+    <div class="plan-card-label">Recommended Plan</div>
+    <div class="plan-name" id="plan-name"></div>
+    <div class="plan-desc" id="plan-desc"></div>
+    <div class="plan-price" id="plan-price"></div>
+  </div>
+
+  <div class="pay-card">
+    <div class="score-label">課金必要度スコア</div>
+    <div class="pay-meter" id="pay-meter"></div>
+    <div class="pay-verdict" id="pay-verdict"></div>
+  </div>
+
+  <div class="combo-card" id="combo-card">
+    <div class="combo-title">Combination Tip</div>
+    <div class="combo-names" id="combo-names"></div>
+    <div class="combo-roles" id="combo-roles"></div>
+  </div>
+
+  <!-- 各AIワンポイントアドバイスカード -->
+  <div class="ai-advice-card">
+    <div class="ai-advice-header">
+      <div>
+        <div class="ai-advice-title">
+          3つのAI、あなたへのワンポイント
+          <span>How to use each AI for your needs</span>
+        </div>
+      </div>
+    </div>
+    <div class="ai-advice-list" id="ai-advice-list"></div>
+  </div>
+
+  <div class="retry-wrap">
+    <button class="btn-retry" onclick="retry()">もう一度診断する</button>
+  </div>
+</div>
+
+<script>
+// ─── 状態管理：各質問の選択値を配列で保持 ───────────
+const answers = {};
+const TOTAL_Q = 7;
+
+// ─── 質問カードの初期化 ──────────────────────────
+document.querySelectorAll('.question-card').forEach(card => {
+  const q = parseInt(card.dataset.q);
+  const isSingle = card.dataset.single === 'true'; // シングルセレクト判定
+  answers[q] = [];
+
+  card.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = parseInt(btn.dataset.val);
+
+      if (isSingle) {
+        // シングルセレクト：他の選択を全解除してから選択
+        card.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        answers[q] = [val];
+      } else {
+        // マルチセレクト：トグル
+        if (btn.classList.contains('selected')) {
+          btn.classList.remove('selected');
+          answers[q] = answers[q].filter(v => v !== val);
+        } else {
+          btn.classList.add('selected');
+          answers[q] = [...answers[q], val];
+        }
+      }
+      refreshCount(q, isSingle);
+    });
+  });
+
+  const nextBtn = document.getElementById('next-' + q);
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      if (q === TOTAL_Q) showResult();
+      else goTo(q + 1);
+    });
+  }
+});
+
+function refreshCount(q, isSingle) {
+  const count = answers[q].length;
+  const el = document.getElementById('count-' + q);
+  const btn = document.getElementById('next-' + q);
+  if (count === 0) {
+    el.innerHTML = isSingle ? '選んでください' : '1つ以上選んでください';
+    btn.disabled = true;
+  } else {
+    el.innerHTML = isSingle ? '<span>選択済み ✓</span>' : `<span>${count}つ</span>選択中`;
+    btn.disabled = false;
+  }
+}
+
+function goTo(q) {
+  document.querySelector('.question-card.active').classList.remove('active');
+  document.querySelector('[data-q="' + q + '"]').classList.add('active');
+  updateProgress(q);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function goBack(q) { goTo(q - 1); }
+
+function updateProgress(q) {
+  const pct = Math.round((q / TOTAL_Q) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = 'Q' + q + ' / ' + TOTAL_Q;
+  document.getElementById('progress-pct').textContent = pct + '%';
+}
+updateProgress(1);
+setTimeout(() => {
+  document.getElementById('progress-wrap').style.opacity = '1';
+  document.getElementById('progress-fill').style.width = Math.round(1/7*100) + '%';
+}, 100);
+
+// ─── スコアテーブル ───────────────────────────────
+// 複数選択に対応：選ばれた各値の点数を合算する
+// ─── スコアテーブル（公平・バランス型 / 2026年3月改訂版）───────
+// 設計方針：各AIの実際の強みに基づいて均等配点
+// 理論最大スコア：ChatGPT=24 / Claude=24 / Gemini=26（検索強みを正当評価）
+//
+// Q1 用途
+//   1:アイデア出し    → ChatGPT主力(+3), Gemini得意(+1)
+//   2:文章執筆・要約  → Claude主力(+3), ChatGPT得意(+1)
+//   3:検索・情報収集  → Gemini主力(+3), ChatGPT得意(+1)
+//   4:画像・クリエイティブ → ChatGPT(+2), Gemini(+2), Claude(+1)
+//
+// Q3 文章の長さ
+//   1:短い        → ChatGPT(+2), Gemini(+2)          ← Geminiも短文得意
+//   2:中程度      → ChatGPT(+1), Claude(+1), Gemini(+1) ← 3社横並び
+//   3:長い        → Claude主力(+3), ChatGPT(+1)
+//   4:非常に長い  → Claude主力(+3), Gemini(+1)
+//
+// Q4 ストレス
+//   1:精度が低い    → ChatGPT(+3)
+//   2:文章の質      → Claude(+3)
+//   3:最新情報が古い → Gemini(+3)
+//   4:制限で止まる  → ChatGPT(+2), Claude(+2), Gemini(+2)  ← 3社横並び
+//   5:操作が複雑    → Gemini(+2), Claude(+1)
+//
+// Q5 ほしい価値
+//   1:発想力・アイデア    → ChatGPT(+2), Gemini(+1)   ← Gemini加点追加
+//   2:論理性・丁寧な解説  → Claude(+2), Gemini(+1)   ← Gemini加点追加
+//   3:最新情報・検索連携  → Gemini(+3)
+//   4:会話のテンポ        → ChatGPT(+2), Gemini(+1)   ← Gemini加点追加
+//   5:長文・ニュアンス    → Claude(+3), ChatGPT(+1)   ← ChatGPT加点追加
+//
+// Q6 画像・ファイル
+//   1:ほとんどない → 加点なし
+//   2:たまに使う   → ChatGPT(+1), Claude(+1), Gemini(+1) ← Gemini加点追加
+//   3:よく使う     → ChatGPT(+2), Gemini(+2), Claude(+1)
+const SCORE_TABLE = {
+  chatgpt: {
+    Q1: { 1:3, 2:1, 3:1, 4:2 },
+    Q3: { 1:2, 2:1, 3:1, 4:0 },
+    Q4: { 1:3, 2:0, 3:0, 4:2, 5:0 },
+    Q5: { 1:2, 2:0, 3:0, 4:2, 5:1 },
+    Q6: { 1:0, 2:1, 3:2 }
+  },
+  claude: {
+    Q1: { 1:0, 2:3, 3:0, 4:1 },
+    Q3: { 1:0, 2:1, 3:3, 4:3 },
+    Q4: { 1:0, 2:3, 3:0, 4:2, 5:1 },
+    Q5: { 1:0, 2:2, 3:0, 4:0, 5:3 },
+    Q6: { 1:0, 2:1, 3:1 }
+  },
+  gemini: {
+    Q1: { 1:1, 2:0, 3:3, 4:2 },
+    Q3: { 1:2, 2:1, 3:0, 4:1 },
+    Q4: { 1:0, 2:0, 3:3, 4:2, 5:2 },
+    Q5: { 1:1, 2:0, 3:3, 4:1, 5:0 },  // 論理性(2)はClaudeの強みのため削除
+    Q6: { 1:0, 2:1, 3:2 }
+  }
+};
+
+function sumQ(ai, qKey, vals) {
+  const table = SCORE_TABLE[ai][qKey] || {};
+  return (vals || []).reduce((s, v) => s + (table[v] || 0), 0);
+}
+
+function calcScores() {
+  const a = answers;
+
+  const chatgpt = sumQ('chatgpt','Q1',a[1]) + sumQ('chatgpt','Q3',a[3])
+                + sumQ('chatgpt','Q4',a[4]) + sumQ('chatgpt','Q5',a[5])
+                + sumQ('chatgpt','Q6',a[6]);
+
+  const claude  = sumQ('claude','Q1',a[1])  + sumQ('claude','Q3',a[3])
+                + sumQ('claude','Q4',a[4])  + sumQ('claude','Q5',a[5])
+                + sumQ('claude','Q6',a[6]);
+
+  const gemini  = sumQ('gemini','Q1',a[1])  + sumQ('gemini','Q3',a[3])
+                + sumQ('gemini','Q4',a[4])  + sumQ('gemini','Q5',a[5])
+                + sumQ('gemini','Q6',a[6]);
+
+  // PayScore：Q2は最大値（頻度の上限）、Q4/Q3/Q6は対象値の有無で判定
+  const q2max = Math.max(...(a[2] && a[2].length ? a[2] : [1]));
+  const payQ2 = [0, 0, 1, 2, 3, 4][q2max] || 0;
+  const payQ4 = (a[4] || []).includes(4) ? 3 : 0;
+  const payQ3 = (a[3] || []).some(v => v >= 3) ? 2 : 0;
+  const payQ6 = (a[6] || []).includes(3) ? 2 : 0;
+  const pay   = payQ2 + payQ4 + payQ3 + payQ6;
+
+  // Q7：最大値（最も高い予算意向）を採用
+  const q7 = Math.max(...(a[7] && a[7].length ? a[7] : [1]));
+
+  return { chatgpt, claude, gemini, pay, q7 };
+}
+
+// ─── プラン定義 ──────────────────────────────────
+// ── プラン情報（2026年3月最新版）──────────────────────
+// ChatGPT: Free / Go $8 / Plus $20 / Pro $200（最新モデル：GPT-5.2）
+// Claude:  Free / Pro $20 / Max 5x $100 / Max 20x $200（最新モデル：Opus 4.6 / Sonnet 4.6）
+// Gemini:  Free / AI Plus ¥1,200 / AI Pro ¥2,900前後 / AI Ultra ¥36,400前後（最新モデル：Gemini 3.1 Pro）
+const PLANS = {
+  ChatGPT: {
+    1: { name:'ChatGPT Free',  price:'無料',    desc:'GPT-5.2に制限付きでアクセス可能。無料でも十分スタートできます。プロンプトを工夫するだけで出力の質が大幅に上がります。' },
+    2: { name:'ChatGPT Go',    price:'$8/月',   desc:'GPT-5.2 Instantへの拡張アクセスが月$8で使える低価格プラン。広告が表示される場合がありますが、頻度が上がってきたらまずここから。' },
+    3: { name:'ChatGPT Plus',  price:'$20/月',  desc:'GPT-5.2フルアクセス・DALL-E・コード実行・Deep Researchが解放。毎日使うヘビーユーザーに最適なプランです。' },
+    4: { name:'ChatGPT Pro',   price:'$200/月', desc:'GPT-5.2の無制限アクセス＋最優先処理。業務ヘビーユーザー向け最上位プラン。個人用途ではまずPlusから試してください。' }
+  },
+  Claude: {
+    1: { name:'Claude Free',          price:'無料',         desc:'Sonnet 4.6に制限付きでアクセス可能。無料でも高品質な文章生成・長文処理ができます。プロンプトの丁寧さが効果を左右します。' },
+    2: { name:'Claude Free + 運用工夫', price:'無料〜',     desc:'月1,000円帯にClaudeの有料プランはありません。Google AI Plus（¥1,200）との比較もおすすめです。' },
+    3: { name:'Claude Pro',           price:'$20/月',       desc:'5倍の使用量＋Projects機能・Google Workspace連携がフル解放。文章業務が多いなら最も費用対効果の高いプランです。' },
+    4: { name:'Claude Max 5x',        price:'$100/月',      desc:'Proの5倍の使用量＋Opus 4.6（100万トークンコンテキスト）へのアクセス。ヘビーユーザーはまずここから。Max 20x（$200）は本当の上級者向けです。' }
+  },
+  Gemini: {
+    1: { name:'Gemini Free',          price:'無料',         desc:'Google検索連携が強みのGemini。無料でもGemini 3 Proに上限付きでアクセス可能。情報収集AIとして大活躍します。' },
+    2: { name:'Google AI Plus',       price:'¥1,200/月',    desc:'コスパ最良のエントリー有料プラン。Gemini 3.1 Proへのアクセス拡大＋200GBストレージ付き。まず試すならここから。' },
+    3: { name:'Google AI Pro',        price:'¥2,900/月前後', desc:'Gemini 3.1 Proフルアクセス＋Deep Research・NotebookLM Plus・Workspace連携が強化される主力プランです。' },
+    4: { name:'Google AI Ultra',      price:'¥36,400/月前後', desc:'最上位プラン。動画生成Veo 3.1・30TBストレージ・YouTube Premium付き。個人では過剰になりやすいため、まずAI Proから検討を。' }
+  }
+};
+
+// ─── 併用パターン ─────────────────────────────────
+const COMBO_MAP = {
+  'ChatGPT-Claude': {
+    name: 'ChatGPT × Claude',
+    roles: [
+      { tag:'ChatGPT', color:'#10a37f', role:'たたき台づくり・アイデア出し' },
+      { tag:'Claude',  color:'#c4622d', role:'整える・深める・文章仕上げ' }
+    ]
+  },
+  'ChatGPT-Gemini': {
+    name: 'ChatGPT × Gemini',
+    roles: [
+      { tag:'ChatGPT', color:'#10a37f', role:'アイデア出し・会話' },
+      { tag:'Gemini',  color:'#4285f4', role:'検索・最新情報収集' }
+    ]
+  },
+  'Claude-Gemini': {
+    name: 'Claude × Gemini',
+    roles: [
+      { tag:'Claude', color:'#c4622d', role:'文章仕上げ・長文処理' },
+      { tag:'Gemini', color:'#4285f4', role:'情報収集・整理' }
+    ]
+  },
+  'ChatGPT-Claude-Gemini': {
+    name: 'ChatGPT × Claude × Gemini',
+    roles: [
+      { tag:'ChatGPT', color:'#10a37f', role:'アイデア・会話' },
+      { tag:'Claude',  color:'#c4622d', role:'文章・分析' },
+      { tag:'Gemini',  color:'#4285f4', role:'検索・最新情報' }
+    ]
+  }
+};
+
+// ─── ユーザータイプ定義 ──────────────────────────
+const USER_TYPES = [
+  {
+    id: 'creator',
+    emoji: '🎨',
+    name: 'クリエイタータイプです。',
+    desc: 'アイデアを形にすることに喜びを感じるタイプ。ゼロから何かを生み出すプロセスにAIを最大限活かせます。「まず10案出して」「もっと尖らせて」という使い方が得意領域です。',
+    tags: ['発想力重視', 'ブレスト向き', 'アイデア量産'],
+    match: (a) => (a[1]||[]).some(v=>[1,4].includes(v)) && (a[5]||[]).includes(1)
+  },
+  {
+    id: 'writer',
+    emoji: '✍️',
+    name: 'ライター・文章職人タイプです。',
+    desc: '言葉にこだわりがあり、文章の質にシビアなタイプ。AIを「下書き機」ではなく「共同編集者」として使いこなすと力を発揮できます。出力をそのまま使うより、たたき台として磨く使い方が向いています。',
+    tags: ['文章品質重視', '長文得意', 'ニュアンス大切'],
+    match: (a) => (a[1]||[]).includes(2) && ((a[5]||[]).some(v=>[2,5].includes(v)) || (a[3]||[]).some(v=>v>=3))
+  },
+  {
+    id: 'researcher',
+    emoji: '🔍',
+    name: 'リサーチャータイプです。',
+    desc: '情報収集と調査が得意で、AIを「賢いアシスタント」として使うタイプ。最新情報や根拠のある回答を重視する傾向があります。AIで調べて、人間が判断する、という分業スタイルが理想形です。',
+    tags: ['情報収集重視', '最新情報志向', '根拠確認派'],
+    match: (a) => (a[1]||[]).includes(3) || (a[5]||[]).includes(3) || (a[4]||[]).includes(3)
+  },
+  {
+    id: 'speedrunner',
+    emoji: '⚡',
+    name: 'スピード重視タイプです。',
+    desc: '「すぐ使えるアウトプット」を求める実務派。AIに完璧を求めず、70点の速さで出してもらい自分で仕上げるスタイルが合っています。制限や遅延にストレスを感じやすいなら、有料プランへの投資対効果が高いです。',
+    tags: ['即レス重視', '実務優先', 'テンポ命'],
+    match: (a) => (a[5]||[]).includes(4) || (a[4]||[]).includes(4)
+  },
+  {
+    id: 'deepworker',
+    emoji: '📚',
+    name: 'ディープワーカータイプです。',
+    desc: '一つのテーマを深く掘り下げ、長文や複雑な情報を扱うことが多いタイプ。AIに長い文脈を保持させながら作業する「Project活用」や「長いシステムプロンプト設定」が効果的です。',
+    tags: ['長文処理重視', '深掘り志向', '複雑タスク向き'],
+    match: (a) => (a[3]||[]).some(v=>v>=3) && (a[5]||[]).includes(5)
+  },
+  {
+    id: 'multitasker',
+    emoji: '🛠️',
+    name: 'マルチタスクタイプです。',
+    desc: 'AIをあらゆる場面で活用しようとする、幅広い使い手タイプ。1つのAIにこだわらず、用途ごとに使い分けることで最大の効果を発揮できます。「ツールボックス型」の使い方がベストです。',
+    tags: ['幅広い活用', 'ツール使い分け', '複数AI向き'],
+    match: (a) => (a[1]||[]).length >= 3
+  },
+  {
+    id: 'beginner',
+    emoji: '🌱',
+    name: 'これからAIを育てるタイプです。',
+    desc: 'まだAIの使い方を探っている段階です。それは強みです。先入観なく使い始められるので、自分の業務に最適な使い方を発見しやすい。まず「週3回、同じ用途で使う」という習慣作りから始めましょう。',
+    tags: ['成長途中', '可能性無限大', 'まず習慣化'],
+    match: () => true  // フォールバック
+  }
+];
+
+function determineUserType(a) {
+  for (const type of USER_TYPES) {
+    if (type.match(a)) return type;
+  }
+  return USER_TYPES[USER_TYPES.length - 1];
+}
+
+// ─── 各AIのワンポイントアドバイス生成 ────────────
+function buildAiAdvice(a) {
+  const q1 = a[1]||[], q3 = a[3]||[], q4 = a[4]||[], q5 = a[5]||[], q6 = a[6]||[];
+
+  // ChatGPT アドバイス
+  let cgUse = 'アイデア出し・ブレストのたたき台に';
+  let cgTip = '「10個アイデアを出して、それぞれ一行で」のように量と形式を指定すると、ChatGPTの発想力が最大限に活きます。';
+  if (q1.includes(4)) { cgUse = '画像生成のプロンプト作りに'; cgTip = 'DALL-Eと連携してビジュアル制作ができます。「〜のスタイルで、〜の雰囲気で」と詳細に指定するほど精度が上がります。'; }
+  else if (q3.some(v=>v<=2) && q5.includes(4)) { cgUse = '短文・会話のテンポ重視で'; cgTip = 'レスポンスが速く、気軽に話しかけやすい。「もっとカジュアルに」「箇条書きで」など追加指示への反応も素直です。'; }
+  else if (q4.includes(1)) { cgUse = '精度の高い回答が必要な作業に'; cgTip = 'プロンプトに「ステップバイステップで考えて」を入れると、精度が大きく向上します。役割設定（「あなたは〜の専門家です」）も効果的です。'; }
+
+  // Claude アドバイス
+  let clUse = '文章の執筆・校正・要約に';
+  let clTip = 'Claudeは指示の意図を深く読み取る力が高いです。「〜というトーンで」「〜の読者向けに」という背景情報を加えると、出力の質が段違いに上がります。';
+  if (q3.some(v=>v>=3)) { clUse = '長文処理・大量テキストの分析に'; clTip = '長いドキュメントの要約や構造化が得意です。「重要な論点を3つに絞って」「表形式で整理して」という形式指定と組み合わせると力を発揮します。'; }
+  else if (q5.includes(2)) { clUse = '論理的な解説・分析に'; clTip = '複雑なテーマの整理や、メリット・デメリットの整理が得意です。「賛成意見と反対意見を両方出して」という使い方で、思考の幅が広がります。'; }
+  else if (q4.includes(2)) { clUse = '自然な文体が求められる文章作成に'; clTip = '「書き直して」「もっと自然に」という指示に的確に応えてくれます。NG例を一緒に示すとさらに精度が上がります。'; }
+
+  // Gemini アドバイス
+  let gmUse = '最新情報の収集・調査に';
+  let gmTip = 'Googleサービスと連携しており、最新のトレンドや時事情報に強いです。「〜について2024年以降の情報で」と時期を指定するのがコツです。';
+  if (q1.includes(3) || q5.includes(3)) { gmUse = 'リアルタイム情報が必要な調査・リサーチに'; gmTip = 'Web検索連携で最新情報を取得しながら回答できます。「信頼できる情報源を含めて」と添えると、根拠付きの回答が得やすくなります。'; }
+  else if (q6.includes(3)) { gmUse = 'ファイル・画像の読み取り・分析に'; gmTip = 'PDFや画像をアップロードしての分析が得意です。「この資料のポイントを箇条書きで」という使い方で、資料読み込みの時間を大幅に削減できます。'; }
+  else if (q4.includes(3)) { gmUse = '最新情報のストレスを解消するために'; gmTip = '「情報が古い」というストレスを最も解消してくれるAIです。Google検索との連携で、リアルタイムの情報にアクセスできます。'; }
+
+  return [
+    { ai: 'ChatGPT', cls: 'chatgpt', use: cgUse, tip: cgTip },
+    { ai: 'Claude',  cls: 'claude',  use: clUse, tip: clTip },
+    { ai: 'Gemini',  cls: 'gemini',  use: gmUse, tip: gmTip }
+  ];
+}
+
+
+function showResult() {
+  const { chatgpt, claude, gemini, pay, q7 } = calcScores();
+  const scores = { ChatGPT: chatgpt, Claude: claude, Gemini: gemini };
+  const maxScore = Math.max(chatgpt, claude, gemini);
+
+  const tied = Object.entries(scores).filter(([,v]) => v === maxScore);
+  const isTied = tied.length > 1;
+  const mainAI = isTied ? tied.map(([k])=>k).join('×') : tied[0][0];
+  const sortedAIs = Object.entries(scores).sort((a,b) => b[1]-a[1]);
+  const subAI = isTied ? null : sortedAIs[1][0];
+
+  const aiClass = isTied ? 'mixed'
+    : mainAI === 'ChatGPT' ? 'chatgpt'
+    : mainAI === 'Claude'  ? 'claude' : 'gemini';
+
+  // タイトル・サブタイトル
+  document.getElementById('result-title').textContent =
+    isTied ? `「${mainAI}」の\n併用がおすすめです` : `あなたのメインAIは\n${mainAI}`;
+  document.getElementById('result-subtitle').textContent =
+    isTied
+      ? '複数のAIが同スコアです。用途ごとに役割を分けて使うのがベストです。'
+      : `${subAI} をサブAIとして組み合わせると、さらに効果的に使えます。`;
+
+  // AI名・理由
+  const nameEl = document.getElementById('main-ai-name');
+  nameEl.textContent = mainAI;
+  nameEl.className = 'ai-name ' + aiClass;
+
+  const reasons = {
+    ChatGPT: '発想力とテンポの良さが光るAI。アイデア出し・短文対応・マルチタスクで頭一つ抜けています。',
+    Claude:  '文章の質と論理性に強み。長文執筆・要約・ニュアンスのある対話なら右に出るAIはいません。',
+    Gemini:  'Google連携による最新情報の強さが特徴。検索・調査・情報整理が主な用途の方に最適です。'
+  };
+  document.getElementById('main-ai-reason').textContent =
+    isTied
+      ? '複数のAIが拮抗しています。それぞれの強みを活かした役割分担がベストな使い方です。'
+      : (reasons[mainAI] || '');
+
+  // スコアバー（アニメーション）
+  const maxBar = Math.max(chatgpt, claude, gemini, 1);
+  setTimeout(() => {
+    document.getElementById('bar-chatgpt').style.width = (chatgpt / maxBar * 100) + '%';
+    document.getElementById('bar-claude').style.width  = (claude  / maxBar * 100) + '%';
+    document.getElementById('bar-gemini').style.width  = (gemini  / maxBar * 100) + '%';
+  }, 200);
+  document.getElementById('val-chatgpt').textContent = chatgpt;
+  document.getElementById('val-claude').textContent  = claude;
+  document.getElementById('val-gemini').textContent  = gemini;
+
+  // プラン
+  const planAI = isTied ? tied[0][0] : mainAI;
+  const plan = (PLANS[planAI] || PLANS['ChatGPT'])[q7] || PLANS[planAI][1];
+  document.getElementById('plan-name').textContent  = plan.name;
+  document.getElementById('plan-desc').textContent  = plan.desc;
+  document.getElementById('plan-price').textContent = plan.price;
+
+  // 課金スコアメーター（最大11）
+  const meterEl = document.getElementById('pay-meter');
+  meterEl.innerHTML = '';
+  for (let i = 1; i <= 11; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'pay-pip' + (i <= pay ? ' lit' : '');
+    meterEl.appendChild(pip);
+  }
+  const vLabel = pay <= 2 ? '無料プランで十分対応できます'
+               : pay <= 5 ? '低価格〜主力プランを検討するタイミング'
+               : '有料プランがほぼ確定レベルです';
+  document.getElementById('pay-verdict').textContent = `課金スコア ${pay}点 ─ ${vLabel}`;
+
+  // 併用カード
+  const comboKey = isTied
+    ? tied.map(([k])=>k).sort().join('-')
+    : [mainAI, subAI].sort().join('-');
+
+  const combo = COMBO_MAP[comboKey];
+  if (combo) {
+    document.getElementById('combo-names').textContent = combo.name;
+    const rolesEl = document.getElementById('combo-roles');
+    rolesEl.innerHTML = '';
+    combo.roles.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'combo-role';
+      div.innerHTML = `<span class="combo-role-tag" style="background:${r.color}20;color:${r.color}">${r.tag}</span><span>${r.role}</span>`;
+      rolesEl.appendChild(div);
+    });
+    document.getElementById('combo-card').style.display = 'block';
+  } else {
+    document.getElementById('combo-card').style.display = 'none';
+  }
+
+  // 画面切替
+  document.getElementById('quiz-wrap').style.display = 'none';
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.querySelector('.hero').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // ── タイプカード ──────────────────────────
+  const userType = determineUserType(answers);
+  document.getElementById('type-emoji').textContent = userType.emoji;
+  document.getElementById('type-name').textContent  = userType.name;
+  document.getElementById('type-desc').textContent  = userType.desc;
+  const tagsEl = document.getElementById('type-tags');
+  tagsEl.innerHTML = '';
+  userType.tags.forEach(t => {
+    const span = document.createElement('span');
+    span.className = 'type-tag';
+    span.textContent = t;
+    tagsEl.appendChild(span);
+  });
+
+  // ── 各AIアドバイスカード ──────────────────
+  const adviceList = buildAiAdvice(answers);
+  const adviceEl = document.getElementById('ai-advice-list');
+  adviceEl.innerHTML = '';
+  adviceList.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'ai-advice-item ' + item.cls;
+    div.innerHTML = `
+      <div class="ai-advice-item-header">
+        <span class="ai-badge ${item.cls}">${item.ai}</span>
+        <span class="ai-advice-use">${item.use}</span>
+      </div>
+      <div class="ai-advice-tip">${item.tip}</div>
+    `;
+    adviceEl.appendChild(div);
+  });
+}
+
+// ─── リトライ ────────────────────────────────────
+function retry() {
+  for (let q = 1; q <= TOTAL_Q; q++) {
+    answers[q] = [];
+    const card = document.querySelector('[data-q="' + q + '"]');
+    const isSingle = card.dataset.single === 'true';
+    card.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('next-' + q).disabled = true;
+    document.getElementById('count-' + q).innerHTML = isSingle ? '選んでください' : '1つ以上選んでください';
+  }
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('quiz-wrap').style.display = 'block';
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.querySelector('.hero').style.display = 'block';
+  document.querySelector('.question-card.active')?.classList.remove('active');
+  document.querySelector('[data-q="1"]').classList.add('active');
+  updateProgress(1);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
