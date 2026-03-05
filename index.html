@@ -443,7 +443,7 @@
   <p class="hero-sub">7つの質問に答えるだけで、ChatGPT・Claude・Geminiの中から<br>あなたにぴったりのAIとプランを診断します。</p>
   <div class="hero-meta">
     <span class="hero-badge">所要時間 約1分</span>
-    <span class="hero-badge">複数選択OK</span>
+    <span class="hero-badge">一部複数選択OK</span>
     <span class="hero-badge">無料・登録不要</span>
   </div>
 </div>
@@ -476,10 +476,10 @@
     </div>
   </div>
 
-  <div class="question-card" data-q="2">
+  <div class="question-card" data-q="2" data-single="true">
     <div class="q-num">Question 02</div>
     <div class="q-text">AIを使う頻度はどのくらいですか？</div>
-    <div class="multi-hint">最も近いものを選んでください（複数可）</div>
+    <div class="multi-hint">1つ選んでください</div>
     <div class="choices">
       <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>月に数回程度</button>
       <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>週1〜2回</button>
@@ -494,10 +494,10 @@
     </div>
   </div>
 
-  <div class="question-card" data-q="3">
+  <div class="question-card" data-q="3" data-single="true">
     <div class="q-num">Question 03</div>
     <div class="q-text">やり取りする文章の長さは？</div>
-    <div class="multi-hint">当てはまるものをすべて選んでください</div>
+    <div class="multi-hint">1つ選んでください</div>
     <div class="choices">
       <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>短い（ひとこと〜数行）</button>
       <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>中程度（数段落）</button>
@@ -547,10 +547,10 @@
     </div>
   </div>
 
-  <div class="question-card" data-q="6">
+  <div class="question-card" data-q="6" data-single="true">
     <div class="q-num">Question 06</div>
     <div class="q-text">画像やファイルをAIに<br>読み込ませることはありますか？</div>
-    <div class="multi-hint">当てはまるものを選んでください</div>
+    <div class="multi-hint">1つ選んでください</div>
     <div class="choices">
       <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>ほとんどない</button>
       <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>たまに使う</button>
@@ -563,10 +563,10 @@
     </div>
   </div>
 
-  <div class="question-card" data-q="7">
+  <div class="question-card" data-q="7" data-single="true">
     <div class="q-num">Question 07 — Last</div>
     <div class="q-text">AIに月いくらまで<br>払えますか？</div>
-    <div class="multi-hint">最も近いものを選んでください（複数可）</div>
+    <div class="multi-hint">1つ選んでください</div>
     <div class="choices">
       <button class="choice-btn" data-val="1"><span class="choice-check">✓</span>無料だけ使いたい</button>
       <button class="choice-btn" data-val="2"><span class="choice-check">✓</span>月1,000円前後まで</button>
@@ -670,19 +670,29 @@ const TOTAL_Q = 7;
 // ─── 質問カードの初期化 ──────────────────────────
 document.querySelectorAll('.question-card').forEach(card => {
   const q = parseInt(card.dataset.q);
+  const isSingle = card.dataset.single === 'true'; // シングルセレクト判定
   answers[q] = [];
 
   card.querySelectorAll('.choice-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const val = parseInt(btn.dataset.val);
-      if (btn.classList.contains('selected')) {
-        btn.classList.remove('selected');
-        answers[q] = answers[q].filter(v => v !== val);
-      } else {
+
+      if (isSingle) {
+        // シングルセレクト：他の選択を全解除してから選択
+        card.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
-        answers[q] = [...answers[q], val];
+        answers[q] = [val];
+      } else {
+        // マルチセレクト：トグル
+        if (btn.classList.contains('selected')) {
+          btn.classList.remove('selected');
+          answers[q] = answers[q].filter(v => v !== val);
+        } else {
+          btn.classList.add('selected');
+          answers[q] = [...answers[q], val];
+        }
       }
-      refreshCount(q);
+      refreshCount(q, isSingle);
     });
   });
 
@@ -695,15 +705,15 @@ document.querySelectorAll('.question-card').forEach(card => {
   }
 });
 
-function refreshCount(q) {
+function refreshCount(q, isSingle) {
   const count = answers[q].length;
   const el = document.getElementById('count-' + q);
   const btn = document.getElementById('next-' + q);
   if (count === 0) {
-    el.innerHTML = '1つ以上選んでください';
+    el.innerHTML = isSingle ? '選んでください' : '1つ以上選んでください';
     btn.disabled = true;
   } else {
-    el.innerHTML = `<span>${count}つ</span>選択中`;
+    el.innerHTML = isSingle ? '<span>選択済み ✓</span>' : `<span>${count}つ</span>選択中`;
     btn.disabled = false;
   }
 }
@@ -1115,9 +1125,10 @@ function retry() {
   for (let q = 1; q <= TOTAL_Q; q++) {
     answers[q] = [];
     const card = document.querySelector('[data-q="' + q + '"]');
+    const isSingle = card.dataset.single === 'true';
     card.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
     document.getElementById('next-' + q).disabled = true;
-    document.getElementById('count-' + q).innerHTML = '1つ以上選んでください';
+    document.getElementById('count-' + q).innerHTML = isSingle ? '選んでください' : '1つ以上選んでください';
   }
   document.getElementById('result-screen').style.display = 'none';
   document.getElementById('quiz-wrap').style.display = 'block';
